@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>手沖咖啡練習紀錄</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<!-- ===== 首頁 ===== -->
+<div id="page-home" class="page active">
+  <div class="home-container">
+    <h1 class="home-title">手沖咖啡<br>練習紀錄</h1>
+    <div class="home-buttons">
+      <button class="btn-primary btn-large" onclick="App.goNewRecord()">新增手沖紀錄</button>
+      <button class="btn-secondary btn-large" onclick="App.goHistory()">查看歷史紀錄</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 新增流程 ===== -->
+<div id="page-new" class="page">
+  <!-- 右上角 X 按鈕 -->
+  <button class="btn-close" onclick="App.confirmDiscard()" aria-label="捨棄此筆紀錄">✕</button>
+
+  <!-- Step 1: 基本資訊 -->
+  <div id="step-1" class="step">
+    <div class="step-content scrollable">
+      <h2 class="step-title">基本資訊</h2>
+      <div class="form-group">
+        <label>沖煮人 <span class="required">*</span></label>
+        <input type="text" id="f-brewer" class="form-input" placeholder="請輸入姓名">
+      </div>
+      <div class="form-group">
+        <label>咖啡豆產國 <span class="required">*</span></label>
+        <input type="text" id="f-origin" class="form-input" placeholder="例：衣索比亞">
+      </div>
+      <div class="form-group">
+        <label>咖啡豆產區 <span class="required">*</span></label>
+        <input type="text" id="f-region" class="form-input" placeholder="例：耶加雪菲">
+      </div>
+      <div class="form-group">
+        <label>咖啡豆品種 <span class="required">*</span></label>
+        <input type="text" id="f-variety" class="form-input" placeholder="例：原生種">
+      </div>
+      <div class="form-group">
+        <label>烘焙日期</label>
+        <input type="date" id="f-roast-date" class="form-input">
+      </div>
+      <div class="form-group">
+        <label>器具</label>
+        <input type="text" id="f-equipment" class="form-input" placeholder="例：V60">
+      </div>
+      <div class="form-group">
+        <label>研磨刻度 <span class="required">*</span></label>
+        <input type="number" id="f-grind" class="form-input" placeholder="例：4.5" step="0.1" min="0">
+      </div>
+      <div class="form-group">
+        <label>水溫 (°C) <span class="required">*</span></label>
+        <input type="number" id="f-temp" class="form-input" placeholder="例：92" step="0.5" min="0">
+      </div>
+      <div class="form-group">
+        <label>乾香 <span class="required">*</span></label>
+        <input type="text" id="f-dry-aroma" class="form-input" placeholder="例：莓果、花香">
+      </div>
+      <div class="form-group">
+        <label>粉重 (克) <span class="required">*</span></label>
+        <input type="number" id="f-dose" class="form-input" placeholder="例：15" step="0.1" min="0">
+      </div>
+    </div>
+    <div class="step-footer">
+      <button id="btn-step1-next" class="btn-primary btn-large" disabled onclick="App.step1Next()">準備沖煮</button>
+    </div>
+  </div>
+
+  <!-- Step 2: 沖煮說明 -->
+  <div id="step-2" class="step hidden">
+    <div class="step-content">
+      <h2 class="step-title">沖煮說明</h2>
+      <div class="instruction-box">
+        <p>沖煮說明文字（待補充）</p>
+      </div>
+    </div>
+    <div class="step-footer">
+      <button class="btn-primary btn-large" onclick="App.startTimer()">開始預熱</button>
+    </div>
+  </div>
+
+  <!-- Step 3: 預熱 -->
+  <div id="step-3" class="step hidden">
+    <div class="timer-bar">
+      <span class="timer-label">計時</span>
+      <span id="timer-display-3" class="timer-value">00:00</span>
+    </div>
+    <div class="step-content">
+      <h2 class="step-title">預熱中</h2>
+      <div class="form-group">
+        <label>預熱水量 (克) <span class="required">*</span></label>
+        <input type="number" id="f-preheat-water" class="form-input input-large" placeholder="例：50" step="0.1" min="0">
+      </div>
+    </div>
+    <div class="step-footer">
+      <button id="btn-preheat-done" class="btn-primary btn-large" disabled onclick="App.preheatDone()">預熱結束，開始第一注</button>
+    </div>
+  </div>
+
+  <!-- Step 4: 第一注 -->
+  <div id="step-4" class="step hidden">
+    <div class="timer-bar">
+      <span class="timer-label">計時</span>
+      <span id="timer-display-4" class="timer-value">00:00</span>
+    </div>
+    <div class="step-content center">
+      <h2 class="step-title">第一注</h2>
+      <p class="step-hint">注水中，完成後按下方按鈕</p>
+    </div>
+    <div class="step-footer">
+      <button class="btn-primary btn-large btn-action" onclick="App.pourEnd(1)">第一注結束</button>
+    </div>
+  </div>
+
+  <!-- Step 5: 第二注 -->
+  <div id="step-5" class="step hidden">
+    <div class="timer-bar">
+      <span class="timer-label">計時</span>
+      <span id="timer-display-5" class="timer-value">00:00</span>
+    </div>
+    <div class="step-content center">
+      <h2 class="step-title">第二注</h2>
+      <p class="step-hint">注水中，完成後按下方按鈕</p>
+    </div>
+    <div class="step-footer">
+      <button class="btn-primary btn-large btn-action" onclick="App.pourEnd(2)">第二注結束</button>
+    </div>
+  </div>
+
+  <!-- Step 6: 決定畫面 -->
+  <div id="step-6" class="step hidden">
+    <div class="timer-bar">
+      <span class="timer-label">計時</span>
+      <span id="timer-display-6" class="timer-value">00:00</span>
+    </div>
+    <div class="step-content center">
+      <h2 class="step-title">繼續注水？</h2>
+      <p class="step-hint">請選擇下一步</p>
+    </div>
+    <div class="step-footer step-footer-two">
+      <button class="btn-secondary btn-large" onclick="App.extractionEnd()">萃取結束</button>
+      <button class="btn-primary btn-large" onclick="App.pourEnd(3)">第三注結束</button>
+    </div>
+  </div>
+
+  <!-- Step 7: 最終畫面（第三注後） -->
+  <div id="step-7" class="step hidden">
+    <div class="timer-bar">
+      <span class="timer-label">計時</span>
+      <span id="timer-display-7" class="timer-value">00:00</span>
+    </div>
+    <div class="step-content center">
+      <h2 class="step-title">第三注</h2>
+      <p class="step-hint">等待萃取完成</p>
+    </div>
+    <div class="step-footer">
+      <button class="btn-primary btn-large btn-action" onclick="App.extractionEnd()">萃取結束</button>
+    </div>
+  </div>
+
+  <!-- Step 8: 萃取後資訊 -->
+  <div id="step-8" class="step hidden">
+    <div class="step-content scrollable">
+      <h2 class="step-title">萃取後資訊</h2>
+      <div class="form-group">
+        <label>咖啡液淨重 (克) <span class="required">*</span></label>
+        <input type="number" id="f-yield" class="form-input" placeholder="例：230" step="0.1" min="0">
+      </div>
+      <div class="form-group">
+        <label>粉液比</label>
+        <div id="brew-ratio-display" class="form-readonly">— 填入淨重後自動計算</div>
+      </div>
+      <div class="form-group">
+        <label>濕香 <span class="required">*</span></label>
+        <input type="text" id="f-wet-aroma" class="form-input" placeholder="例：柑橘、蜂蜜">
+      </div>
+    </div>
+    <div class="step-footer">
+      <button id="btn-step8-next" class="btn-primary btn-large" disabled onclick="App.step8Next()">開始品測</button>
+    </div>
+  </div>
+
+  <!-- Step 9: 品測 -->
+  <div id="step-9" class="step hidden">
+    <div class="step-content scrollable">
+      <h2 class="step-title">品測</h2>
+      <div class="tasting-table-wrapper">
+        <table class="tasting-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>高溫</th>
+              <th>中低溫</th>
+              <th>放涼後</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="row-label">風味</td>
+              <td><textarea class="tasting-input" data-row="flavor" data-col="hot" rows="2"></textarea></td>
+              <td><textarea class="tasting-input" data-row="flavor" data-col="warm" rows="2"></textarea></td>
+              <td><textarea class="tasting-input" data-row="flavor" data-col="cool" rows="2"></textarea></td>
+            </tr>
+            <tr>
+              <td class="row-label">餘韻</td>
+              <td><textarea class="tasting-input" data-row="finish" data-col="hot" rows="2"></textarea></td>
+              <td><textarea class="tasting-input" data-row="finish" data-col="warm" rows="2"></textarea></td>
+              <td><textarea class="tasting-input" data-row="finish" data-col="cool" rows="2"></textarea></td>
+            </tr>
+            <tr>
+              <td class="row-label">酸質</td>
+              <td>
+                <div class="slider-cell">
+                  <input type="range" class="tasting-slider" data-row="acidity" data-col="hot" min="1" max="5" step="0.1" value="3">
+                  <span class="slider-value">3.0</span>
+                  <input type="text" class="tasting-note" data-row="acidity" data-col="hot" placeholder="備註">
+                </div>
+              </td>
+              <td>
+                <div class="slider-cell">
+                  <input type="range" class="tasting-slider" data-row="acidity" data-col="warm" min="1" max="5" step="0.1" value="3">
+                  <span class="slider-value">3.0</span>
+                  <input type="text" class="tasting-note" data-row="acidity" data-col="warm" placeholder="備註">
+                </div>
+              </td>
+              <td>
+                <div class="slider-cell">
+                  <input type="range" class="tasting-slider" data-row="acidity" data-col="cool" min="1" max="5" step="0.1" value="3">
+                  <span class="slider-value">3.0</span>
+                  <input type="text" class="tasting-note" data-row="acidity" data-col="cool" placeholder="備註">
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="row-label">甜感</td>
+              <td>
+                <div class="slider-cell">
+                  <input type="range" class="tasting-slider" data-row="sweetness" data-col="hot" min="1" max="5" step="0.1" value="3">
+                  <span class="slider-value">3.0</span>
+                  <input type="text" class="tasting-note" data-row="sweetness" data-col="hot" placeholder="備註">
+                </div>
+              </td>
+              <td>
+                <div class="slider-cell">
+                  <input type="range" class="tasting-slider" data-row="sweetness" data-col="warm" min="1" max="5" step="0.1" value="3">
+                  <span class="slider-value">3.0</span>
+                  <input type="text" class="tasting-note" data-row="sweetness" data-col="warm" placeholder="備註">
+                </div>
+              </td>
+              <td>
+                <div class="slider-cell">
+                  <input type="range" class="tasting-slider" data-row="sweetness" data-col="cool" min="1" max="5" step="0.1" value="3">
+                  <span class="slider-value">3.0</span>
+                  <input type="text" class="tasting-note" data-row="sweetness" data-col="cool" placeholder="備註">
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="row-label">口感</td>
+              <td><textarea class="tasting-input" data-row="body" data-col="hot" rows="2"></textarea></td>
+              <td><textarea class="tasting-input" data-row="body" data-col="warm" rows="2"></textarea></td>
+              <td><textarea class="tasting-input" data-row="body" data-col="cool" rows="2"></textarea></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="form-group">
+        <label>整體備註</label>
+        <textarea id="f-notes" class="form-input" rows="3" placeholder="選填"></textarea>
+      </div>
+    </div>
+    <div class="step-footer">
+      <button class="btn-primary btn-large" onclick="App.step9Next()">預覽</button>
+    </div>
+  </div>
+
+  <!-- Step 10: 預覽 -->
+  <div id="step-10" class="step hidden">
+    <div class="step-content scrollable">
+      <h2 class="step-title">預覽紀錄</h2>
+      <p class="preview-hint">所有欄位皆可點擊修改</p>
+      <div id="preview-content"></div>
+    </div>
+    <div class="step-footer">
+      <button class="btn-primary btn-large" onclick="App.submitRecord()">送出</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 水量輸入彈出框 ===== -->
+<div id="water-modal" class="modal hidden">
+  <div class="modal-overlay"></div>
+  <div class="modal-box">
+    <h3 id="water-modal-title" class="modal-title"></h3>
+    <input type="number" id="water-modal-input" class="form-input input-large" placeholder="輸入水量（克）" step="0.1" min="0">
+    <button id="water-modal-confirm" class="btn-primary btn-large" onclick="App.confirmWater()">確認</button>
+  </div>
+</div>
+
+<!-- ===== 確認放棄彈出框 ===== -->
+<div id="discard-modal" class="modal hidden">
+  <div class="modal-overlay"></div>
+  <div class="modal-box">
+    <h3 class="modal-title">是否捨棄此筆紀錄？</h3>
+    <p class="modal-desc">目前填寫的所有資料將被清除。</p>
+    <div class="modal-buttons">
+      <button class="btn-secondary" onclick="App.cancelDiscard()">否，繼續填寫</button>
+      <button class="btn-danger" onclick="App.doDiscard()">是，捨棄</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 歷史紀錄 ===== -->
+<div id="page-history" class="page">
+  <div class="page-header">
+    <button class="btn-back" onclick="App.goHome()">← 返回</button>
+    <h2>歷史紀錄</h2>
+  </div>
+
+  <!-- 篩選 -->
+  <div id="history-filter" class="filter-section">
+    <div class="form-group">
+      <label>沖煮人</label>
+      <input type="text" id="filter-brewer" class="form-input" placeholder="全部">
+    </div>
+    <div class="form-group">
+      <label>咖啡豆</label>
+      <select id="filter-bean" class="form-input">
+        <option value="">全部</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>沖煮日期（起）</label>
+      <input type="date" id="filter-date-from" class="form-input">
+    </div>
+    <div class="form-group">
+      <label>沖煮日期（迄）</label>
+      <input type="date" id="filter-date-to" class="form-input">
+    </div>
+    <button class="btn-primary" onclick="App.searchHistory()">查詢</button>
+  </div>
+
+  <!-- 列表 -->
+  <div id="history-list" class="history-list"></div>
+</div>
+
+<!-- ===== 詳情頁 ===== -->
+<div id="page-detail" class="page">
+  <div class="page-header">
+    <button class="btn-back" onclick="App.goHistory()">← 返回列表</button>
+    <h2>紀錄詳情</h2>
+  </div>
+  <div class="step-content scrollable">
+    <div id="detail-content"></div>
+  </div>
+  <div class="detail-footer">
+    <button id="btn-edit" class="btn-secondary" onclick="App.toggleEdit()">修改</button>
+    <button id="btn-save" class="btn-primary hidden" onclick="App.saveEdit()">儲存</button>
+    <button class="btn-primary" onclick="App.goCompare()">比較同咖啡豆</button>
+    <button class="btn-danger" onclick="App.confirmDelete()">刪除</button>
+  </div>
+</div>
+
+<!-- ===== 比較頁 ===== -->
+<div id="page-compare" class="page">
+  <div class="page-header">
+    <button class="btn-back" onclick="App.goDetail()">← 返回詳情</button>
+    <h2>比較同咖啡豆數據</h2>
+  </div>
+  <div id="compare-bean-label" class="compare-bean-label"></div>
+  <div class="step-content scrollable">
+    <div id="compare-content"></div>
+  </div>
+</div>
+
+<!-- ===== 刪除確認框 ===== -->
+<div id="delete-modal" class="modal hidden">
+  <div class="modal-overlay"></div>
+  <div class="modal-box">
+    <h3 class="modal-title">確定刪除此筆紀錄？</h3>
+    <p class="modal-desc">此動作無法復原。</p>
+    <div class="modal-buttons">
+      <button class="btn-secondary" onclick="App.cancelDelete()">取消</button>
+      <button class="btn-danger" onclick="App.doDelete()">確定刪除</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 通用提示框 ===== -->
+<div id="alert-modal" class="modal hidden">
+  <div class="modal-overlay" onclick="App.closeAlert()"></div>
+  <div class="modal-box">
+    <p id="alert-message" class="modal-desc"></p>
+    <button class="btn-primary" onclick="App.closeAlert()">確定</button>
+  </div>
+</div>
+
+<script src="./script.js?v=2"></script>
+</body>
+</html>
