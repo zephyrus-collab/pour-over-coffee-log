@@ -354,13 +354,13 @@ textarea.form-input { resize: vertical; font-family: inherit; }
 .tasting-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 320px;
+  min-width: 480px;
 }
 .tasting-table th, .tasting-table td {
   border: 1px solid var(--border);
-  padding: 6px 4px;
+  padding: 8px 6px;
   vertical-align: top;
-  font-size: 0.82rem;
+  font-size: 1rem;
 }
 .tasting-table th {
   background: var(--brown-dark);
@@ -382,7 +382,7 @@ textarea.form-input { resize: vertical; font-family: inherit; }
   width: 100%;
   border: none;
   background: transparent;
-  font-size: 0.82rem;
+  font-size: 1rem;
   resize: none;
   font-family: inherit;
   color: var(--text);
@@ -410,7 +410,7 @@ textarea.form-input { resize: vertical; font-family: inherit; }
   width: 100%;
   border: 1px solid var(--border);
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   padding: 3px 5px;
   background: var(--white);
   color: var(--text);
