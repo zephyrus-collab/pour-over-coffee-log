@@ -124,7 +124,21 @@ function showPage(id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const pg = document.getElementById(id);
   if (pg) pg.classList.add('active');
+  history.pushState({ page: id }, '');
 }
+
+window.addEventListener('popstate', e => {
+  const active = document.querySelector('.page.active')?.id;
+  if (active === 'page-new') {
+    history.pushState({ page: 'page-new' }, '');
+    App.confirmDiscard();
+    return;
+  }
+  const target = e.state?.page || 'page-home';
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const pg = document.getElementById(target);
+  if (pg) pg.classList.add('active');
+});
 
 /* ===== Step management ===== */
 function showStep(n) {
@@ -757,3 +771,5 @@ const App = {
     document.getElementById('alert-modal').classList.add('hidden');
   },
 };
+
+history.replaceState({ page: 'page-home' }, '');

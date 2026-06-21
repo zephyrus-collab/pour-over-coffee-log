@@ -18,7 +18,7 @@
   --radius-sm: 8px;
   --footer-h: 90px;
   --header-h: 56px;
-  --timer-h: 52px;
+  --timer-h: 33vh;
 }
 
 html, body {
@@ -143,16 +143,19 @@ html, body {
 .timer-bar {
   flex-shrink: 0;
   height: var(--timer-h);
-  background: var(--brown-dark);
+  background: var(--brown);
   color: var(--white);
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 0 60px 0 16px;
+  gap: 6px;
+  margin: 12px 20px 0;
+  border-radius: var(--radius);
+  padding: 0 60px 0 20px;
 }
-.timer-label { font-size: 0.85rem; opacity: 0.75; }
-.timer-value { font-size: 1.6rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
+.timer-label { font-size: 1rem; opacity: 0.75; }
+.timer-value { font-size: 5rem; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: 0.05em; line-height: 1; }
 
 .step-content {
   flex: 1;
@@ -182,9 +185,18 @@ html, body {
 
 .step-footer {
   flex-shrink: 0;
-  padding: 12px 20px 24px;
+  height: 33vh;
+  padding: 12px 20px;
   background: var(--cream);
   border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+.step-footer .btn-primary,
+.step-footer .btn-secondary,
+.step-footer .btn-danger {
+  flex: 1;
+  font-size: 1.5rem;
 }
 .step-footer-two {
   display: grid;
