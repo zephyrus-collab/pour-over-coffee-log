@@ -51,12 +51,25 @@
         <input type="text" id="f-origin" class="form-input" placeholder="例：衣索比亞">
       </div>
       <div class="form-group">
-        <label>咖啡豆產區 <span class="required">*</span></label>
+        <label>產區/莊園/生產人 <span class="required">*</span></label>
         <input type="text" id="f-region" class="form-input" placeholder="例：耶加雪菲">
       </div>
       <div class="form-group">
         <label>咖啡豆品種 <span class="required">*</span></label>
         <input type="text" id="f-variety" class="form-input" placeholder="例：原生種">
+      </div>
+      <div class="form-group">
+        <label>處理法</label>
+        <select id="f-process" class="form-input" onchange="App.onProcessChange()">
+          <option value="">請選擇</option>
+          <option value="水洗">水洗</option>
+          <option value="日曬">日曬</option>
+          <option value="蜜處理">蜜處理</option>
+          <option value="濕剝">濕剝</option>
+          <option value="厭氧">厭氧</option>
+          <option value="其他">其他（手動輸入）</option>
+        </select>
+        <input type="text" id="f-process-other" class="form-input hidden" placeholder="請輸入處理法" style="margin-top:8px">
       </div>
       <div class="form-group">
         <label>烘焙日期</label>
@@ -93,7 +106,7 @@
     <div class="step-content">
       <h2 class="step-title">沖煮說明</h2>
       <div class="instruction-box">
-        <p>沖煮說明文字（待補充）</p>
+        <p>準備好後可以開始預熱，注水完畢後馬上按下「開始預熱」按鈕並記錄預熱水量</p>
       </div>
     </div>
     <div class="step-footer">

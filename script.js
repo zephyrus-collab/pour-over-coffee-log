@@ -176,9 +176,10 @@ function strSimilarity(a, b) {
 }
 
 function isSameBean(a, b) {
-  return a.origin.trim().toLowerCase() === b.origin.trim().toLowerCase()
-    && a.variety.trim().toLowerCase() === b.variety.trim().toLowerCase()
-    && strSimilarity(a.region, b.region) >= 0.6;
+  return strSimilarity(a.origin, b.origin) >= 0.7
+    && strSimilarity(a.variety, b.variety) >= 0.7
+    && strSimilarity(a.region, b.region) >= 0.6
+    && (a.process || '').trim().toLowerCase() === (b.process || '').trim().toLowerCase();
 }
 
 /* ===== Page routing ===== */
@@ -222,7 +223,7 @@ const App = {
   goNewRecord() {
     State.rec = {
       id: uid(),
-      brewer: '', origin: '', region: '', variety: '',
+      brewer: '', origin: '', region: '', variety: '', process: '',
       roastDate: '', equipment: '',
       grind: '', temp: '', dryAroma: '', dose: '',
       preheatTime: null, preheatWater: null,
@@ -233,9 +234,11 @@ const App = {
       createdAt: null,
     };
     ['f-brewer','f-origin','f-region','f-variety','f-roast-date',
-     'f-equipment','f-grind','f-temp','f-dry-aroma','f-dose'].forEach(id => {
+     'f-equipment','f-grind','f-temp','f-dry-aroma','f-dose','f-process'].forEach(id => {
       document.getElementById(id).value = '';
     });
+    document.getElementById('f-process-other').value = '';
+    document.getElementById('f-process-other').classList.add('hidden');
     document.getElementById('btn-step1-next').disabled = true;
     showPage('page-new');
     showStep(1);
@@ -284,6 +287,10 @@ const App = {
     r.origin    = document.getElementById('f-origin').value.trim();
     r.region    = document.getElementById('f-region').value.trim();
     r.variety   = document.getElementById('f-variety').value.trim();
+    const processSel = document.getElementById('f-process').value;
+    r.process = processSel === '其他'
+      ? (document.getElementById('f-process-other').value.trim() || '其他')
+      : processSel;
     r.roastDate = document.getElementById('f-roast-date').value;
     r.equipment = document.getElementById('f-equipment').value.trim();
     r.grind     = document.getElementById('f-grind').value;
@@ -291,6 +298,17 @@ const App = {
     r.dryAroma  = document.getElementById('f-dry-aroma').value.trim();
     r.dose      = document.getElementById('f-dose').value;
     showStep(2);
+  },
+
+  onProcessChange() {
+    const sel = document.getElementById('f-process');
+    const other = document.getElementById('f-process-other');
+    if (sel.value === '其他') {
+      other.classList.remove('hidden');
+    } else {
+      other.classList.add('hidden');
+      other.value = '';
+    }
   },
 
   /* ----- Step 2 ----- */
@@ -456,8 +474,9 @@ const App = {
       ['沖煮人',   r.brewer],
       ['沖煮日期', r.createdAt ? fmtDate(r.createdAt) : '（送出後記錄）'],
       ['產國',     r.origin],
-      ['產區',     r.region],
+      ['產區/莊園/生產人', r.region],
       ['品種',     r.variety],
+      ['處理法',   r.process || '—'],
       ['烘焙日期', r.roastDate || '—'],
       ['器具',     r.equipment || '—'],
       ['粉重 (g)', r.dose],
@@ -498,7 +517,7 @@ const App = {
       </div>`;
     };
 
-    const infoKeys = ['brewer','_date','origin','region','variety','roastDate','equipment','dose','grind','temp','dryAroma'];
+    const infoKeys = ['brewer','_date','origin','region','variety','process','roastDate','equipment','dose','grind','temp','dryAroma'];
     let infoHtml = infoRows.map((row, i) => {
       const key = infoKeys[i];
       const editable = editMode && key !== '_date';
@@ -688,6 +707,7 @@ const App = {
           <span>👤 ${r.brewer}</span>
           <span>📅 ${fmtDate(r.createdAt)}</span>
           <span>⚖️ ${r.brewRatio}</span>
+          ${r.process ? `<span>☕ ${r.process}</span>` : ''}
         </div>
       </div>`).join('');
   },
@@ -771,6 +791,7 @@ const App = {
     const fields = [
       ['沖煮日期',     r => fmtDate(r.createdAt)],
       ['沖煮人',       r => r.brewer],
+      ['處理法',       r => r.process || '—'],
       ['粉重 (g)',     r => r.dose],
       ['研磨刻度',     r => r.grind],
       ['水溫 (°C)',    r => r.temp],
