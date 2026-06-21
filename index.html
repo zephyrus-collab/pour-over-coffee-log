@@ -4,17 +4,31 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>手沖咖啡練習紀錄</title>
-  <link rel="stylesheet" href="./style.css?v=8">
+  <link rel="stylesheet" href="./style.css?v=9">
 </head>
 <body>
 
+<!-- ===== 登入頁 ===== -->
+<div id="page-login" class="page active">
+  <div class="home-container">
+    <h1 class="home-title">手沖咖啡<br>練習紀錄</h1>
+    <div class="home-buttons">
+      <button class="btn-primary btn-large" onclick="signInWithGoogle()">使用 Google 帳號登入</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== 首頁 ===== -->
-<div id="page-home" class="page active">
+<div id="page-home" class="page">
   <div class="home-container">
     <h1 class="home-title">手沖咖啡<br>練習紀錄</h1>
     <div class="home-buttons">
       <button class="btn-primary btn-large" onclick="App.goNewRecord()">新增手沖紀錄</button>
       <button class="btn-secondary btn-large" onclick="App.goHistory()">查看歷史紀錄</button>
+    </div>
+    <div class="home-user">
+      <span id="home-user-name"></span>
+      <button class="btn-signout" onclick="signOutUser()">登出</button>
     </div>
   </div>
 </div>
@@ -414,6 +428,6 @@
   </div>
 </div>
 
-<script src="./script.js?v=4"></script>
+<script type="module" src="./script.js?v=5"></script>
 </body>
 </html>

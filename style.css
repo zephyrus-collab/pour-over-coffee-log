@@ -43,7 +43,7 @@ html, body {
 .page.hidden { display: none !important; }
 
 /* ===== Home ===== */
-#page-home .home-container {
+#page-home .home-container, #page-login .home-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -67,6 +67,23 @@ html, body {
   gap: 16px;
   width: 100%;
   max-width: 320px;
+}
+
+.home-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.btn-signout {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
 }
 
 /* ===== Buttons ===== */

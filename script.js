@@ -1,28 +1,92 @@
-'use strict';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js';
+import { getFirestore, collection, doc, getDocs, setDoc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js';
 
-/* ===== Storage ===== */
+/* ===== Firebase ===== */
+const firebaseConfig = {
+  apiKey: "AIzaSyDOy3zhSNK_dHGkNBsFxIeepGpvVUIzGLE",
+  authDomain: "pour-over-coffee-log.firebaseapp.com",
+  projectId: "pour-over-coffee-log",
+  storageBucket: "pour-over-coffee-log.firebasestorage.app",
+  messagingSenderId: "740164646088",
+  appId: "1:740164646088:web:4a6bd1c515a501deb761fd"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const auth = getAuth(firebaseApp);
+const db = getFirestore(firebaseApp);
+const provider = new GoogleAuthProvider();
+
+export async function signInWithGoogle() {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch (e) {
+    console.error(e);
+    App.showAlert('登入失敗，請再試一次');
+  }
+}
+
+export async function signOutUser() {
+  DB.clearCache();
+  await signOut(auth);
+}
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    DB.clearCache();
+    const el = document.getElementById('home-user-name');
+    if (el) el.textContent = user.displayName || user.email;
+    const active = document.querySelector('.page.active');
+    if (!active || active.id === 'page-login') {
+      showPage('page-home');
+    }
+  } else {
+    DB.clearCache();
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-login')?.classList.add('active');
+    history.replaceState({ page: 'page-login' }, '');
+  }
+});
+
+/* ===== Storage (Firestore) ===== */
 const DB = {
-  KEY: 'pourover_records',
-  load() {
-    try { return JSON.parse(localStorage.getItem(this.KEY) || '[]'); } catch { return []; }
+  _cache: null,
+
+  _uid() { return auth.currentUser?.uid; },
+
+  async load() {
+    if (this._cache) return [...this._cache];
+    const uid = this._uid();
+    if (!uid) return [];
+    const snap = await getDocs(collection(db, 'users', uid, 'records'));
+    this._cache = snap.docs.map(d => d.data());
+    return [...this._cache];
   },
-  save(records) {
-    localStorage.setItem(this.KEY, JSON.stringify(records));
+
+  async add(record) {
+    const uid = this._uid();
+    if (!uid) return;
+    await setDoc(doc(db, 'users', uid, 'records', record.id), record);
+    if (this._cache) this._cache.push(record);
   },
-  add(record) {
-    const records = this.load();
-    records.push(record);
-    this.save(records);
+
+  async update(id, data) {
+    const uid = this._uid();
+    if (!uid) return;
+    await setDoc(doc(db, 'users', uid, 'records', id), data);
+    if (this._cache) {
+      const idx = this._cache.findIndex(r => r.id === id);
+      if (idx !== -1) this._cache[idx] = { ...this._cache[idx], ...data };
+    }
   },
-  update(id, data) {
-    const records = this.load();
-    const idx = records.findIndex(r => r.id === id);
-    if (idx !== -1) { records[idx] = { ...records[idx], ...data }; this.save(records); }
+
+  async remove(id) {
+    const uid = this._uid();
+    if (!uid) return;
+    await deleteDoc(doc(db, 'users', uid, 'records', id));
+    if (this._cache) this._cache = this._cache.filter(r => r.id !== id);
   },
-  remove(id) {
-    const records = this.load().filter(r => r.id !== id);
-    this.save(records);
-  },
+
+  clearCache() { this._cache = null; },
 };
 
 /* ===== Timer ===== */
@@ -57,15 +121,14 @@ const Timer = {
 
 /* ===== State ===== */
 const State = {
-  // new record being built
   rec: null,
   currentStep: null,
   pendingPourIndex: null,
-
-  // history / detail
   currentRecordId: null,
   isEditing: false,
   editData: null,
+  _numpadVal: '',
+  _pendingPourTime: null,
 };
 
 /* ===== Helpers ===== */
@@ -94,7 +157,6 @@ function ratio(dose, yld) {
   return `1 : ${(yld / dose).toFixed(2)}`;
 }
 
-// Levenshtein-based fuzzy match (normalised similarity)
 function strSimilarity(a, b) {
   a = a.trim().toLowerCase();
   b = b.trim().toLowerCase();
@@ -134,7 +196,7 @@ window.addEventListener('popstate', e => {
     App.confirmDiscard();
     return;
   }
-  const target = e.state?.page || 'page-home';
+  const target = e.state?.page || 'page-login';
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const pg = document.getElementById(target);
   if (pg) pg.classList.add('active');
@@ -164,13 +226,12 @@ const App = {
       roastDate: '', equipment: '',
       grind: '', temp: '', dryAroma: '', dose: '',
       preheatTime: null, preheatWater: null,
-      pours: [], // [{time, water}]
+      pours: [],
       extractionTime: null,
       yld: '', wetAroma: '', brewRatio: '',
       tasting: {}, notes: '',
       createdAt: null,
     };
-    // reset form fields
     ['f-brewer','f-origin','f-region','f-variety','f-roast-date',
      'f-equipment','f-grind','f-temp','f-dry-aroma','f-dose'].forEach(id => {
       document.getElementById(id).value = '';
@@ -181,8 +242,8 @@ const App = {
     this._bindStep1Validation();
   },
 
-  goHistory() {
-    this._populateBeanFilter();
+  async goHistory() {
+    await this._populateBeanFilter();
     document.getElementById('filter-brewer').value = '';
     document.getElementById('filter-date-from').value = '';
     document.getElementById('filter-date-to').value = '';
@@ -190,7 +251,7 @@ const App = {
       const to = document.getElementById('filter-date-to');
       if (!to.value) to.value = document.getElementById('filter-date-from').value;
     };
-    this.searchHistory();
+    await this.searchHistory();
     showPage('page-history');
   },
 
@@ -198,8 +259,8 @@ const App = {
     showPage('page-detail');
   },
 
-  goCompare() {
-    this._renderCompare();
+  async goCompare() {
+    await this._renderCompare();
     showPage('page-compare');
   },
 
@@ -270,10 +331,8 @@ const App = {
 
   /* ----- Steps 4-6: pour management ----- */
   pourEnd(pourIndex) {
-    // record time immediately
     const t = Timer.elapsed();
     State.pendingPourIndex = pourIndex;
-    // show water input modal
     document.getElementById('water-modal-title').textContent = `第${['一','二','三'][pourIndex-1]}注水量（克）`;
     document.getElementById('water-modal-input').value = '';
     document.getElementById('water-modal-confirm').disabled = true;
@@ -284,7 +343,6 @@ const App = {
       document.getElementById('water-modal-confirm').disabled = !(v > 0);
     };
     inp.focus();
-    // store time temporarily
     State._pendingPourTime = t;
   },
 
@@ -292,12 +350,9 @@ const App = {
     const water = parseFloat(document.getElementById('water-modal-input').value);
     if (!(water > 0)) return;
     document.getElementById('water-modal').classList.add('hidden');
-
     const idx = State.pendingPourIndex;
-    // record into pours array (0-indexed: 0=first,1=second,2=third)
     while (State.rec.pours.length < idx) State.rec.pours.push(null);
     State.rec.pours[idx - 1] = { time: State._pendingPourTime, water };
-
     if (idx === 1) { showStep(5); }
     else if (idx === 2) { showStep(6); }
     else if (idx === 3) { showStep(7); }
@@ -307,7 +362,6 @@ const App = {
   extractionEnd() {
     State.rec.extractionTime = Timer.elapsed();
     Timer.stop();
-    // reset step 8
     document.getElementById('f-yield').value = '';
     document.getElementById('f-wet-aroma').value = '';
     document.getElementById('brew-ratio-display').textContent = '— 填入淨重後自動計算';
@@ -347,7 +401,6 @@ const App = {
     r.yld      = document.getElementById('f-yield').value;
     r.wetAroma = document.getElementById('f-wet-aroma').value.trim();
     r.brewRatio = ratio(parseFloat(r.dose), parseFloat(r.yld));
-    // reset tasting
     document.querySelectorAll('.tasting-input').forEach(el => { el.value = ''; });
     document.querySelectorAll('.tasting-slider').forEach(el => {
       el.value = 3;
@@ -399,9 +452,6 @@ const App = {
   },
 
   _buildRecordHTML(r, editMode) {
-    const ce = editMode ? 'contenteditable="true"' : '';
-    const cePour = (editMode && r.pours) ? 'contenteditable="true"' : '';
-
     const infoRows = [
       ['沖煮人',   r.brewer],
       ['沖煮日期', r.createdAt ? fmtDate(r.createdAt) : '（送出後記錄）'],
@@ -416,7 +466,6 @@ const App = {
       ['乾香',     r.dryAroma],
     ];
 
-    // build pour rows with keys attached to avoid index misalignment
     const pourRows = [];
     pourRows.push({ label: '預熱時間',     value: fmtSec(r.preheatTime),      key: 'preheatTime' });
     pourRows.push({ label: '預熱水量 (g)', value: r.preheatWater ?? '—',       key: 'preheatWater' });
@@ -449,7 +498,6 @@ const App = {
       </div>`;
     };
 
-    // basic info rows: all editable except 沖煮日期
     const infoKeys = ['brewer','_date','origin','region','variety','roastDate','equipment','dose','grind','temp','dryAroma'];
     let infoHtml = infoRows.map((row, i) => {
       const key = infoKeys[i];
@@ -461,7 +509,6 @@ const App = {
       rowHtml(label, value, editMode, key)
     ).join('');
 
-    // after rows: yld editable, brewRatio auto, wetAroma editable
     const afterKeys = ['yld','brewRatio','wetAroma'];
     let afterHtml = afterRows.map((row, i) => {
       const key = afterKeys[i];
@@ -469,11 +516,9 @@ const App = {
       return rowHtml(row[0], row[1], editable, key);
     }).join('');
 
-    // tasting table
-    const colNames = { hot: '高溫', warm: '中低溫', cool: '放涼後' };
-    const rowNames = { flavor: '風味', finish: '餘韻', acidity: '酸質', sweetness: '甜感', body: '口感' };
     const cols = ['hot','warm','cool'];
     const rows = ['flavor','finish','acidity','sweetness','body'];
+    const rowNames = { flavor: '風味', finish: '餘韻', acidity: '酸質', sweetness: '甜感', body: '口感' };
 
     let tastingRows = rows.map(row => {
       const cells = cols.map(col => {
@@ -525,7 +570,6 @@ const App = {
   },
 
   _bindPreviewRecalc() {
-    // For new record preview: watch yld changes to recalc ratio
     document.querySelectorAll('[data-key]').forEach(el => {
       el.oninput = () => this._recalcRatioFromPreview();
     });
@@ -541,17 +585,15 @@ const App = {
     ratioEl.textContent = ratio(d, y);
   },
 
-  submitRecord() {
-    // Collect any edits from preview contenteditable cells
+  async submitRecord() {
     const r = State.rec;
     this._collectPreviewEdits(r);
     r.createdAt = Date.now();
-    DB.add(r);
+    await DB.add(r);
     this.goHome();
   },
 
   _collectPreviewEdits(r) {
-    // map pour sub-keys to pours array
     const pourMap = {
       pour0time: [0, 'time'], pour0water: [0, 'water'],
       pour1time: [1, 'time'], pour1water: [1, 'water'],
@@ -570,7 +612,6 @@ const App = {
       }
     });
 
-    // tasting edits
     document.querySelectorAll('[data-trow]').forEach(el => {
       const row = el.dataset.trow;
       const col = el.dataset.tcol;
@@ -584,7 +625,6 @@ const App = {
       }
     });
 
-    // recalc ratio from possibly-edited dose/yld
     const d = parseFloat(r.dose);
     const y = parseFloat(r.yld);
     r.brewRatio = ratio(d, y);
@@ -605,21 +645,21 @@ const App = {
   },
 
   /* ----- History ----- */
-  _populateBeanFilter() {
-    const records = DB.load();
+  async _populateBeanFilter() {
+    const records = await DB.load();
     const beans = [...new Set(records.map(r => beanLabel(r)))].sort();
     const sel = document.getElementById('filter-bean');
     sel.innerHTML = '<option value="">全部</option>' +
       beans.map(b => `<option value="${b}">${b}</option>`).join('');
   },
 
-  searchHistory() {
+  async searchHistory() {
     const brewer   = document.getElementById('filter-brewer').value.trim().toLowerCase();
     const bean     = document.getElementById('filter-bean').value;
     const dateFrom = document.getElementById('filter-date-from').value;
     const dateTo   = document.getElementById('filter-date-to').value;
 
-    let records = DB.load();
+    let records = await DB.load();
     if (brewer) records = records.filter(r => r.brewer.toLowerCase().includes(brewer));
     if (bean)   records = records.filter(r => beanLabel(r) === bean);
     if (dateFrom) {
@@ -631,7 +671,6 @@ const App = {
       records = records.filter(r => r.createdAt <= to);
     }
 
-    // sort newest first
     records.sort((a, b) => b.createdAt - a.createdAt);
     this._renderHistoryList(records);
   },
@@ -654,10 +693,11 @@ const App = {
   },
 
   /* ----- Detail ----- */
-  openDetail(id) {
+  async openDetail(id) {
     State.currentRecordId = id;
     State.isEditing = false;
-    const r = DB.load().find(x => x.id === id);
+    const records = await DB.load();
+    const r = records.find(x => x.id === id);
     if (!r) return;
     document.getElementById('detail-content').innerHTML = this._buildRecordHTML(r, false);
     document.getElementById('btn-edit').classList.remove('hidden');
@@ -665,9 +705,10 @@ const App = {
     showPage('page-detail');
   },
 
-  toggleEdit() {
+  async toggleEdit() {
     State.isEditing = true;
-    const r = DB.load().find(x => x.id === State.currentRecordId);
+    const records = await DB.load();
+    const r = records.find(x => x.id === State.currentRecordId);
     if (!r) return;
     document.getElementById('detail-content').innerHTML = this._buildRecordHTML(r, true);
     this._bindDetailRecalc(r);
@@ -687,12 +728,12 @@ const App = {
     });
   },
 
-  saveEdit() {
-    const r = DB.load().find(x => x.id === State.currentRecordId);
+  async saveEdit() {
+    const records = await DB.load();
+    const r = records.find(x => x.id === State.currentRecordId);
     if (!r) return;
     this._collectPreviewEdits(r);
-    DB.update(State.currentRecordId, r);
-    // re-render readonly
+    await DB.update(State.currentRecordId, r);
     document.getElementById('detail-content').innerHTML = this._buildRecordHTML(r, false);
     document.getElementById('btn-edit').classList.remove('hidden');
     document.getElementById('btn-save').classList.add('hidden');
@@ -706,19 +747,20 @@ const App = {
   cancelDelete() {
     document.getElementById('delete-modal').classList.add('hidden');
   },
-  doDelete() {
+  async doDelete() {
     document.getElementById('delete-modal').classList.add('hidden');
-    DB.remove(State.currentRecordId);
+    await DB.remove(State.currentRecordId);
     this.goHistory();
   },
 
   /* ----- Compare ----- */
-  _renderCompare() {
-    const current = DB.load().find(x => x.id === State.currentRecordId);
+  async _renderCompare() {
+    const records = await DB.load();
+    const current = records.find(x => x.id === State.currentRecordId);
     if (!current) return;
     document.getElementById('compare-bean-label').textContent = beanLabel(current);
-    const all = DB.load().sort((a, b) => b.createdAt - a.createdAt);
-    const matches = all.filter(r => isSameBean(r, current));
+    const matches = [...records].sort((a, b) => b.createdAt - a.createdAt)
+      .filter(r => isSameBean(r, current));
 
     const el = document.getElementById('compare-content');
     if (matches.length <= 1) {
@@ -745,7 +787,6 @@ const App = {
       ['咖啡液淨重 (g)',r=> r.yld],
       ['乾香',         r => r.dryAroma],
       ['濕香',         r => r.wetAroma],
-      // tasting
       ['風味（高溫）',   r => r.tasting?.flavor?.hot ?? ''],
       ['風味（中低溫）', r => r.tasting?.flavor?.warm ?? ''],
       ['風味（放涼後）', r => r.tasting?.flavor?.cool ?? ''],
@@ -764,7 +805,7 @@ const App = {
       ['整體備註',     r => r.notes],
     ];
 
-    const thead = `<tr><th>欄位</th>${matches.map((r,i) => `<th>${fmtDate(r.createdAt)}<br><small>${r.brewer}</small></th>`).join('')}</tr>`;
+    const thead = `<tr><th>欄位</th>${matches.map(r => `<th>${fmtDate(r.createdAt)}<br><small>${r.brewer}</small></th>`).join('')}</tr>`;
     const tbody = fields.map(([label, fn]) =>
       `<tr><td class="field-label">${label}</td>${matches.map(r => `<td>${fn(r) ?? ''}</td>`).join('')}</tr>`
     ).join('');
@@ -787,4 +828,8 @@ const App = {
   },
 };
 
-history.replaceState({ page: 'page-home' }, '');
+window.App = App;
+window.signInWithGoogle = signInWithGoogle;
+window.signOutUser = signOutUser;
+
+history.replaceState({ page: 'page-login' }, '');
