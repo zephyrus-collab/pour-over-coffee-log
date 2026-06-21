@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>手沖咖啡練習紀錄</title>
-  <link rel="stylesheet" href="./style.css?v=4">
+  <link rel="stylesheet" href="./style.css?v=6">
 </head>
 <body>
 
@@ -89,18 +89,29 @@
 
   <!-- Step 3: 預熱 -->
   <div id="step-3" class="step hidden">
-    <div class="timer-bar">
+    <div class="timer-bar timer-bar-sm">
       <span class="timer-label">計時</span>
       <span id="timer-display-3" class="timer-value">00:00</span>
     </div>
-    <div class="step-content">
-      <h2 class="step-title">預熱中</h2>
-      <div class="form-group">
-        <label>預熱水量 (克) <span class="required">*</span></label>
-        <input type="number" id="f-preheat-water" class="form-input input-large" placeholder="例：50" step="0.1" min="0">
-      </div>
+    <div class="numpad-display">
+      <span class="numpad-label">預熱水量 (克)</span>
+      <span id="preheat-water-display" class="numpad-value">—</span>
     </div>
-    <div class="step-footer">
+    <div class="numpad-grid">
+      <button class="numpad-btn" onclick="App.numpadPress('1')">1</button>
+      <button class="numpad-btn" onclick="App.numpadPress('2')">2</button>
+      <button class="numpad-btn" onclick="App.numpadPress('3')">3</button>
+      <button class="numpad-btn" onclick="App.numpadPress('4')">4</button>
+      <button class="numpad-btn" onclick="App.numpadPress('5')">5</button>
+      <button class="numpad-btn" onclick="App.numpadPress('6')">6</button>
+      <button class="numpad-btn" onclick="App.numpadPress('7')">7</button>
+      <button class="numpad-btn" onclick="App.numpadPress('8')">8</button>
+      <button class="numpad-btn" onclick="App.numpadPress('9')">9</button>
+      <button class="numpad-btn" onclick="App.numpadPress('.')">.</button>
+      <button class="numpad-btn" onclick="App.numpadPress('0')">0</button>
+      <button class="numpad-btn numpad-del" onclick="App.numpadPress('del')">⌫</button>
+    </div>
+    <div class="step-footer step-footer-sm">
       <button id="btn-preheat-done" class="btn-primary btn-large" disabled onclick="App.preheatDone()">預熱結束，開始第一注</button>
     </div>
   </div>
@@ -403,6 +414,6 @@
   </div>
 </div>
 
-<script src="./script.js?v=3"></script>
+<script src="./script.js?v=4"></script>
 </body>
 </html>

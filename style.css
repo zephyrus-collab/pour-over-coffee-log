@@ -204,6 +204,57 @@ html, body {
   gap: 12px;
 }
 
+/* ===== Numpad (Step 3) ===== */
+.timer-bar-sm {
+  height: 25vh;
+}
+.numpad-display {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 20px;
+  gap: 2px;
+}
+.numpad-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.numpad-value {
+  font-size: 2.4rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--brown-dark);
+  letter-spacing: 0.04em;
+}
+.numpad-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 6px;
+  padding: 0 12px;
+  min-height: 0;
+}
+.numpad-btn {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--brown-dark);
+  font-size: 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.1s;
+}
+.numpad-btn:active { background: var(--cream-dark); }
+.numpad-del { font-size: 1.3rem; background: var(--cream-dark); }
+.step-footer-sm {
+  height: 20vh;
+}
+
 /* ===== Forms ===== */
 .form-group {
   margin-bottom: 16px;

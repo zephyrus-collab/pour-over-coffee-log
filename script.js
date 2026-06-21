@@ -235,21 +235,36 @@ const App = {
   /* ----- Step 2 ----- */
   startTimer() {
     Timer.start();
-    // reset preheat water field
-    const f = document.getElementById('f-preheat-water');
-    f.value = '';
+    State._numpadVal = '';
+    document.getElementById('preheat-water-display').textContent = '—';
     document.getElementById('btn-preheat-done').disabled = true;
-    f.oninput = () => {
-      const v = parseFloat(f.value);
-      document.getElementById('btn-preheat-done').disabled = !(v > 0);
-    };
     showStep(3);
+  },
+
+  /* ----- Step 3 numpad ----- */
+  numpadPress(key) {
+    let v = State._numpadVal || '';
+    if (key === 'del') {
+      v = v.slice(0, -1);
+    } else if (key === '.') {
+      if (v.includes('.') || v === '') return;
+      v += '.';
+    } else {
+      if (v === '0') v = key;
+      else v += key;
+      if (v.length > 7) return;
+    }
+    State._numpadVal = v;
+    const display = document.getElementById('preheat-water-display');
+    display.textContent = v === '' ? '—' : v;
+    const num = parseFloat(v);
+    document.getElementById('btn-preheat-done').disabled = !(num > 0);
   },
 
   /* ----- Step 3 ----- */
   preheatDone() {
     State.rec.preheatTime  = Timer.elapsed();
-    State.rec.preheatWater = parseFloat(document.getElementById('f-preheat-water').value);
+    State.rec.preheatWater = parseFloat(State._numpadVal || '0');
     showStep(4);
   },
 
