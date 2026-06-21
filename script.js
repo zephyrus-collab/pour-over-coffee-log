@@ -269,7 +269,7 @@ const App = {
 
   /* ----- Step 1 ----- */
   _bindStep1Validation() {
-    const required = ['f-brewer','f-origin','f-region','f-variety','f-grind','f-temp','f-dry-aroma','f-dose'];
+    const required = ['f-brewer','f-origin','f-variety','f-grind','f-temp','f-dry-aroma','f-dose'];
     const btn = document.getElementById('btn-step1-next');
     const check = () => {
       btn.disabled = !required.every(id => document.getElementById(id).value.trim() !== '');
